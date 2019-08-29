@@ -126,12 +126,12 @@ Vector robot_phr::Q_samecfg(const matrix &QM, const int &cfg)
 
 	for (int i = 1; i <= QM.ROW; i++)
 	{
-		cfg_qi = Qcfg_K(QM.SubVector(i, HORZ));
+		cfg_qi = Qcfg_K(QM.SubVector(i,HORZ));
 
 		if (cfg == cfg_qi)
 		{
 			//Ksew_n = Ksew_temp;
-			result = QM.SubVector(i, HORZ);
+			result = QM.SubVector(i,HORZ);
 			break;
 		}
 	}
@@ -260,6 +260,8 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 	double py = T.GetValue(2,4);
 	double pz = T.GetValue(3,4);
 
+	double k3_temp;
+
 	//定义结果矩阵
 	matrix theta(8, 6);
 
@@ -310,10 +312,12 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 	Vector theta3(4, VERT), K3(2, VERT), m4(2, VERT);
 
 	//[theta3]计算K3
-	K3 = ( pz *pz- 2 * DH.d1*pz + DH.a1*DH.a1 - DH.a2*DH.a2 - DH.a3 *DH.a3 + DH.d1 *DH.d1 - DH.d4*DH.d4 + Vmultiply(m3, m3) - 2 * DH.a1*m3) / (2 * DH.a2);
+	//K3 = ( pz *pz- 2 * DH.d1*pz + DH.a1*DH.a1 - DH.a2*DH.a2 - DH.a3 *DH.a3 + DH.d1 *DH.d1 - DH.d4*DH.d4 + Vmultiply(m3, m3) - 2 * DH.a1*m3) / (2 * DH.a2);
+	k3_temp = pz * pz - 2 * DH.d1 * pz + DH.a1 * DH.a1 - DH.a2 * DH.a2 - DH.a3 * DH.a3 + DH.d1 * DH.d1 - DH.d4 * DH.d4;
+	K3 = (Vector(k3_temp, 2) + Vmultiply(m3, m3) - 2 * DH.a1 * m3) / (2 * DH.a2);
 
 	//[theta3]计算m4
-	m4 = DH.d4*DH.d4 + DH.a3*DH.a3 - Vmultiply(K3, K3);
+	m4 = Vector((DH.d4*DH.d4 + DH.a3*DH.a3), 2) - Vmultiply(K3, K3);
 
 	//定义变量
 	Vector ML(m4.Sign());
@@ -337,8 +341,8 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 	double atan2_a3d4 = atan2(DH.a3, DH.d4);
 	theta3(1) = atan2_a3d4 - atan2(K3(1), sqrt(m4(1)));
 	theta3(2) = atan2_a3d4 - atan2(K3(2), sqrt(m4(2)));
-	theta3(3) = atan2_a3d4 - atan2(K3(3), -sqrt(m4(1)));
-	theta3(4) = atan2_a3d4 - atan2(K3(4), -sqrt(m4(2)));
+	theta3(3) = atan2_a3d4 - atan2(K3(1), -sqrt(m4(1)));
+	theta3(4) = atan2_a3d4 - atan2(K3(2), -sqrt(m4(2)));
 
 	//[theta3]归一化处理，保证theta3的值位于区间[-3pi/2,pi/2]。
 	for (int i = 1; i <= 4; i++)
@@ -389,8 +393,10 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 	Vector S23(4, VERT), C23(4, VERT), theta23(4, VERT), theta2(4, VERT);
 
 	//[theta2]计算S23、C23
-	S23 = (DH.a3*DH.d1 + DH.a1*DH.d4 - DH.a3*pz - DH.a2*pz*m6 - DH.a1*DH.a2*m5 - DH.d4*m3 + DH.a2*DH.d1*m6 + DH.a2*Vmultiply(m3,m5));
-	C23 = (DH.d1*DH.d4 - DH.a1*DH.a3 - DH.d4*pz + DH.a3*m3 - DH.a2*DH.d1*m5 + DH.a2*pz*m5 - DH.a1*DH.a2*m6 + DH.a2*Vmultiply(m3,m6));
+	//S23 = (DH.a3*DH.d1 + DH.a1*DH.d4 - DH.a3*pz - DH.a2*pz*m6 - DH.a1*DH.a2*m5 - DH.d4*m3 + DH.a2*DH.d1*m6 + DH.a2*Vmultiply(m3,m5));
+	S23 = Vector((DH.a3*DH.d1 + DH.a1*DH.d4 - DH.a3*pz), 4) - DH.a2*pz*m6 - DH.a1*DH.a2*m5 - DH.d4*m3 + DH.a2*DH.d1*m6 + DH.a2*Vmultiply(m3, m5);
+	//C23 = (DH.d1*DH.d4 - DH.a1*DH.a3 - DH.d4*pz + DH.a3*m3 - DH.a2*DH.d1*m5 + DH.a2*pz*m5 - DH.a1*DH.a2*m6 + DH.a2*Vmultiply(m3,m6));
+	C23 = Vector((DH.d1*DH.d4 - DH.a1*DH.a3 - DH.d4*pz), 4) + DH.a3*m3 - DH.a2*DH.d1*m5 + DH.a2*pz*m5 - DH.a1*DH.a2*m6 + DH.a2*Vmultiply(m3, m6);
 
 	//[theta2]计算theta23
 	theta23(1) = atan2(S23(1), C23(1));
@@ -437,7 +443,7 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 	Vector C4(4, VERT), S4(4, VERT), theta4(4, VERT);
 
 	//[theta4]计算C4、S4
-	C4 = Vmultiply(m8,m10) + az*m9;
+	C4 = Vmultiply(-1.0*m8,m10) + az*m9;
 	S4 = ay*m1 - ax*m2;
 
 	//[theta4]计算theta4
@@ -558,7 +564,7 @@ matrix robot_phr::Ikine_matrix(const matrix &T)
 		}
 
 		//计算theta5_
-		theta5_ = -1 * theta_t(i, 5);
+		theta5_(i) = -1 * theta_t(i, 5);
 
 		//计算theta6_
 		if (theta_t(i, 6) > 0)
@@ -752,9 +758,9 @@ Vector robot_phr::Ikine_cfg(const matrix &qIK8, int cfg)
 		CFG = cfg;
 	}
 
-	Vector qIK_N1(Q_samecfg(qIK8, CFG));
+	//Vector qIK_N1(Q_samecfg(qIK8, CFG));
 
-	return qIK_N1;
+	return Q_samecfg(qIK8, CFG);
 }
 double robot_phr::Ksew_select(const Ksew &Ksew, int Singular_flag)
 {

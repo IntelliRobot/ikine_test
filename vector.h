@@ -41,7 +41,7 @@ public:
 	Vector(double x,double y);
 
 	//构造复制向量
-	Vector(double x, int N);
+	Vector(double x, int N);   
 
 
 	//拼接

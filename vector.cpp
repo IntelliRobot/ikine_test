@@ -157,7 +157,7 @@ double & Vector::operator () (unsigned int Index) const
 const Vector & Vector::operator = (const Vector & theVector)
 {
 	//校验
-	if (pVector == NULL) 
+	if ((pVector == NULL)||(COUNT<theVector.COUNT))
 	{
 		COUNT = theVector.COUNT;
 		pVector = new double[COUNT];
@@ -168,10 +168,13 @@ const Vector & Vector::operator = (const Vector & theVector)
 	
 	else
 	{
-		unsigned uiCount = COUNT > theVector.COUNT ? theVector.COUNT : COUNT;
+		TYPE = theVector.TYPE;
+		COUNT = theVector.COUNT;
+
+		//unsigned uiCount = COUNT > theVector.COUNT ? theVector.COUNT : COUNT;
 
 		//赋值
-		memcpy(pVector, theVector.pVector, uiCount*sizeof(double));
+		memcpy(pVector, theVector.pVector, COUNT *sizeof(double));
 	}
 	//取最小的COUNT
 
